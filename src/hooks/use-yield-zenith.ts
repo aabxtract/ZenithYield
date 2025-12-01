@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/context/wallet-context';
-import { POOLS, Pool } from '@/lib/constants';
+import { POOLS, Pool, ZAP_ASSETS } from '@/lib/constants';
 import { useToast } from './use-toast';
 
 export interface PoolData {
@@ -29,7 +29,7 @@ const initializeState = (): PoolState => {
   return state;
 };
 
-type LoadingState = 'staking' | 'unstaking' | 'claiming' | 'funding' | 'settingApy' | 'togglingStatus';
+type LoadingState = 'staking' | 'unstaking' | 'claiming' | 'funding' | 'settingApy' | 'togglingStatus' | 'zapping';
 
 export const useYieldZenith = () => {
   const { isConnected } = useWallet();
@@ -95,7 +95,7 @@ export const useYieldZenith = () => {
       [poolId]: {
         ...poolState,
         stakedBalance: poolState.stakedBalance + amount,
-        tvl: poolState.tvl + amount, // This is a simplification
+        tvl: poolState.tvl + amount * 100, // This is a simplification
         lpTokenBalance: poolState.lpTokenBalance - amount,
       }
     }));
@@ -124,7 +124,7 @@ export const useYieldZenith = () => {
       [poolId]: {
         ...poolState,
         stakedBalance: poolState.stakedBalance - amount,
-        tvl: poolState.tvl - amount, // This is a simplification
+        tvl: poolState.tvl - amount * 100, // This is a simplification
         lpTokenBalance: poolState.lpTokenBalance + amount,
       }
     }));
@@ -161,6 +161,39 @@ export const useYieldZenith = () => {
       title: "Rewards Claimed",
       description: `You have claimed ${claimedAmount.toFixed(6)} ${poolState.pool.rewardTokenSymbol}.`,
     });
+  }, [poolStates, toast]);
+
+  const zapIn = useCallback(async (poolId: string, assetSymbol: string, amount: number) => {
+    const poolState = poolStates[poolId];
+    const asset = ZAP_ASSETS.find(a => a.symbol === assetSymbol);
+    if (!poolState || !asset || amount <= 0) {
+        toast({ variant: "destructive", title: "Invalid Input", description: "Please provide a valid asset and amount." });
+        return;
+    }
+     if (!poolState.pool.active) {
+        toast({ variant: "destructive", title: "Pool Inactive", description: "This pool is currently not accepting new zaps." });
+        return;
+    }
+
+    setLoadingState(poolId, 'zapping');
+    toast({ title: "Zap In Progress...", description: `Swapping ${assetSymbol} for ${poolState.pool.lpTokenSymbol} and staking.` });
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    // Dummy conversion: 1 asset unit = 0.5 LP token
+    const lpAmount = (amount * asset.price) / 100;
+
+    setPoolStates(prev => ({
+      ...prev,
+      [poolId]: {
+        ...poolState,
+        stakedBalance: poolState.stakedBalance + lpAmount,
+        tvl: poolState.tvl + (amount * asset.price), // TVL increase by asset value
+      }
+    }));
+
+    setLoadingState(poolId, null);
+    toast({ title: "Zap Successful!", description: `Zapped ${amount} ${assetSymbol} for ${lpAmount.toFixed(4)} ${poolState.pool.lpTokenSymbol} and staked.` });
+
   }, [poolStates, toast]);
 
   // Admin functions
@@ -225,6 +258,7 @@ export const useYieldZenith = () => {
   const isStaking = (poolId: string) => loadingStates[poolId] === 'staking';
   const isUnstaking = (poolId: string) => loadingStates[poolId] === 'unstaking';
   const isClaiming = (poolId: string) => loadingStates[poolId] === 'claiming';
+  const isZapping = (poolId: string) => loadingStates[poolId] === 'zapping';
   const isFunding = (poolId: string) => loadingStates[poolId] === 'funding';
   const isSettingApy = (poolId: string) => loadingStates[poolId] === 'settingApy';
   const isTogglingStatus = (poolId: string) => loadingStates[poolId] === 'togglingStatus';
@@ -235,9 +269,11 @@ export const useYieldZenith = () => {
     stake,
     unstake,
     claim,
+    zapIn,
     isStaking,
     isUnstaking,
     isClaiming,
+    isZapping,
     // Admin
     fundPool,
     setPoolApy,

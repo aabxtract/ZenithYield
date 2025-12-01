@@ -9,9 +9,11 @@ interface YieldZenithContextType {
   stake: (poolId: string, amount: number) => Promise<void>;
   unstake: (poolId: string, amount: number) => Promise<void>;
   claim: (poolId: string) => Promise<void>;
+  zapIn: (poolId: string, assetSymbol: string, amount: number) => Promise<void>;
   isStaking: (poolId: string) => boolean;
   isUnstaking: (poolId: string) => boolean;
   isClaiming: (poolId: string) => boolean;
+  isZapping: (poolId: string) => boolean;
   // Admin functions
   fundPool: (poolId: string, amount: number) => Promise<void>;
   setPoolApy: (poolId: string, newApy: number) => Promise<void>;

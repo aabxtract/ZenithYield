@@ -49,6 +49,13 @@ export const POOLS: Pool[] = [
         active: false,
     }
 ];
+
+export const ZAP_ASSETS = [
+    { symbol: 'ETH', name: 'Ethereum', price: 3500 },
+    { symbol: 'USDC', name: 'USD Coin', price: 1 },
+    { symbol: 'WBTC', name: 'Wrapped Bitcoin', price: 65000 },
+];
+
 // Deprecated single-pool constants
 export const APY = POOLS[0]?.apy ?? 0;
 export const TOKEN_NAME = POOLS[0]?.lpTokenName ?? 'LP Token';

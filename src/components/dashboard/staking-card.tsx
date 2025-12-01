@@ -8,6 +8,8 @@ import { useYieldZenithContext } from '@/hooks/use-yield-zenith-provider';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { ZapForm } from './zap-form';
 
 export function StakingCard({ poolId }: { poolId: string }) {
   const [amount, setAmount] = useState('');
@@ -32,39 +34,54 @@ export function StakingCard({ poolId }: { poolId: string }) {
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
-        <CardTitle>Stake {pool.lpTokenName}</CardTitle>
-        <CardDescription>Deposit your {pool.lpTokenSymbol} tokens to earn rewards.</CardDescription>
+        <CardTitle>Stake in {pool.lpTokenName} Pool</CardTitle>
+        <CardDescription>Deposit tokens to earn rewards.</CardDescription>
       </CardHeader>
       <CardContent>
         {pool.active ? (
-            <div className="space-y-2">
-            <div className="flex justify-between items-baseline">
-                <label htmlFor="stake-amount" className="text-sm font-medium">
-                Amount
-                </label>
-                <span className="text-sm text-muted-foreground">
-                Balance: {lpTokenBalance.toLocaleString()}
-                </span>
-            </div>
-            <div className="relative">
-                <Input
-                id="stake-amount"
-                type="number"
-                placeholder="0.0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pr-20"
-                />
-                <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7"
-                onClick={handleMaxClick}
-                >
-                Max
-                </Button>
-            </div>
-            </div>
+          <Tabs defaultValue="stake" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="stake">Stake LP</TabsTrigger>
+              <TabsTrigger value="zap">Zap In</TabsTrigger>
+            </TabsList>
+            <TabsContent value="stake" className="pt-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-baseline">
+                    <label htmlFor="stake-amount" className="text-sm font-medium">
+                    {pool.lpTokenSymbol} Amount
+                    </label>
+                    <span className="text-sm text-muted-foreground">
+                    Balance: {lpTokenBalance.toLocaleString()}
+                    </span>
+                </div>
+                <div className="relative">
+                    <Input
+                    id="stake-amount"
+                    type="number"
+                    placeholder="0.0"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="pr-20"
+                    />
+                    <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7"
+                    onClick={handleMaxClick}
+                    >
+                    Max
+                    </Button>
+                </div>
+              </div>
+              <Button onClick={handleStake} disabled={isStaking(poolId) || !amount} className="w-full mt-4">
+                {isStaking(poolId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isStaking(poolId) ? 'Staking...' : `Stake ${pool.lpTokenSymbol}`}
+              </Button>
+            </TabsContent>
+            <TabsContent value="zap" className="pt-4">
+              <ZapForm poolId={poolId} />
+            </TabsContent>
+          </Tabs>
         ) : (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -75,14 +92,6 @@ export function StakingCard({ poolId }: { poolId: string }) {
             </Alert>
         )}
       </CardContent>
-      {pool.active && (
-        <CardFooter>
-            <Button onClick={handleStake} disabled={isStaking(poolId) || !amount} className="w-full">
-            {isStaking(poolId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isStaking(poolId) ? 'Staking...' : 'Stake'}
-            </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }
