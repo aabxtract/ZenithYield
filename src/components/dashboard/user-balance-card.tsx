@@ -4,13 +4,19 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useYieldZenithContext } from '@/hooks/use-yield-zenith-provider';
-import { REWARD_TOKEN_SYMBOL, TOKEN_SYMBOL } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 import { UnstakeModal } from './unstake-modal';
 
-export function UserBalanceCard() {
-  const { stakedBalance, rewards, claim, isClaiming } = useYieldZenithContext();
+export function UserBalanceCard({ poolId }: { poolId: string }) {
+  const { claim, isClaiming, getPoolData } = useYieldZenithContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const poolData = getPoolData(poolId);
+
+  if (!poolData) return null;
+
+  const { stakedBalance, rewards } = poolData;
+  const { lpTokenSymbol, rewardTokenSymbol } = poolData.pool;
 
   return (
     <>
@@ -24,7 +30,7 @@ export function UserBalanceCard() {
             <div>
               <p className="text-sm text-muted-foreground">Staked Balance</p>
               <p className="text-2xl font-semibold">
-                {stakedBalance.toLocaleString('en-US', { maximumFractionDigits: 4 })} {TOKEN_SYMBOL}
+                {stakedBalance.toLocaleString('en-US', { maximumFractionDigits: 4 })} {lpTokenSymbol}
               </p>
             </div>
           </div>
@@ -32,12 +38,12 @@ export function UserBalanceCard() {
             <div>
               <p className="text-sm text-muted-foreground">Accumulated Rewards</p>
               <p className="text-2xl font-semibold text-primary">
-                {rewards.toLocaleString('en-US', { maximumFractionDigits: 6 })} {REWARD_TOKEN_SYMBOL}
+                {rewards.toLocaleString('en-US', { maximumFractionDigits: 6 })} {rewardTokenSymbol}
               </p>
             </div>
-            <Button onClick={claim} disabled={isClaiming || rewards <= 0}>
-              {isClaiming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isClaiming ? 'Claiming...' : 'Claim'}
+            <Button onClick={() => claim(poolId)} disabled={isClaiming(poolId) || rewards <= 0}>
+              {isClaiming(poolId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isClaiming(poolId) ? 'Claiming...' : 'Claim'}
             </Button>
           </div>
         </CardContent>
@@ -52,7 +58,7 @@ export function UserBalanceCard() {
           </Button>
         </CardFooter>
       </Card>
-      <UnstakeModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
+      <UnstakeModal poolId={poolId} isOpen={isModalOpen} onOpenChange={setIsModalOpen} />
     </>
   );
 }

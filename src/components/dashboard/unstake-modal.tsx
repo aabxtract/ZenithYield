@@ -17,16 +17,22 @@ import { Loader2 } from 'lucide-react';
 interface UnstakeModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  poolId: string;
 }
 
-export function UnstakeModal({ isOpen, onOpenChange }: UnstakeModalProps) {
+export function UnstakeModal({ isOpen, onOpenChange, poolId }: UnstakeModalProps) {
   const [amount, setAmount] = useState('');
-  const { unstake, isUnstaking, stakedBalance } = useYieldZenithContext();
+  const { unstake, isUnstaking, getPoolData } = useYieldZenithContext();
+  const poolData = getPoolData(poolId);
+
+  if (!poolData) return null;
+
+  const { stakedBalance } = poolData;
 
   const handleUnstake = () => {
     const unstakeAmount = parseFloat(amount);
     if (!isNaN(unstakeAmount) && unstakeAmount > 0) {
-      unstake(unstakeAmount).then(() => {
+      unstake(poolId, unstakeAmount).then(() => {
         setAmount('');
         onOpenChange(false);
       });
@@ -41,7 +47,7 @@ export function UnstakeModal({ isOpen, onOpenChange }: UnstakeModalProps) {
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Unstake LP Tokens</DialogTitle>
+          <DialogTitle>Unstake {poolData.pool.lpTokenSymbol} Tokens</DialogTitle>
           <DialogDescription>
             Choose how many LP tokens you want to withdraw from the pool.
           </DialogDescription>
@@ -76,9 +82,9 @@ export function UnstakeModal({ isOpen, onOpenChange }: UnstakeModalProps) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleUnstake} disabled={isUnstaking || !amount}>
-            {isUnstaking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isUnstaking ? 'Unstaking...' : 'Confirm Unstake'}
+          <Button onClick={handleUnstake} disabled={isUnstaking(poolId) || !amount}>
+            {isUnstaking(poolId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isUnstaking(poolId) ? 'Unstaking...' : 'Confirm Unstake'}
           </Button>
         </DialogFooter>
       </DialogContent>

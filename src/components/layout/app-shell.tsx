@@ -7,6 +7,7 @@ import {
   Wand2,
   Vote,
   LineChart,
+  Layers,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -27,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const getPageTitle = () => {
+    if (pathname.startsWith('/pools')) return 'Staking Pools';
     if (pathname.startsWith('/dashboard')) return 'Dashboard';
     if (pathname.startsWith('/apy-optimizer')) return 'APY Optimizer';
     if (pathname.startsWith('/governance')) return 'Governance';
@@ -53,11 +55,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/dashboard" legacyBehavior passHref>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/dashboard')}>
+                <Link href="/pools" legacyBehavior passHref>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/pools') || pathname.startsWith('/dashboard')}>
                     <a>
-                      <LayoutDashboard />
-                      <span>Dashboard</span>
+                      <Layers />
+                      <span>Pools</span>
                     </a>
                   </SidebarMenuButton>
                 </Link>

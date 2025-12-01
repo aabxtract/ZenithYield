@@ -1,9 +1,18 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useYieldZenith } from './use-yield-zenith';
+import { useYieldZenith, PoolData } from './use-yield-zenith';
 
-type YieldZenithContextType = ReturnType<typeof useYieldZenith>;
+interface YieldZenithContextType {
+  poolStates: Record<string, PoolData>;
+  getPoolData: (poolId: string) => PoolData | undefined;
+  stake: (poolId: string, amount: number) => Promise<void>;
+  unstake: (poolId: string, amount: number) => Promise<void>;
+  claim: (poolId: string) => Promise<void>;
+  isStaking: (poolId: string) => boolean;
+  isUnstaking: (poolId: string) => boolean;
+  isClaiming: (poolId: string) => boolean;
+}
 
 const YieldZenithContext = createContext<YieldZenithContextType | undefined>(undefined);
 

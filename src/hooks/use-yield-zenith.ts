@@ -2,42 +2,78 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/context/wallet-context';
-import { APY, INITIAL_TVL } from '@/lib/constants';
+import { POOLS, Pool } from '@/lib/constants';
 import { useToast } from './use-toast';
+
+export interface PoolData {
+  pool: Pool;
+  stakedBalance: number;
+  rewards: number;
+  tvl: number;
+  lpTokenBalance: number;
+}
+
+export type PoolState = Record<string, PoolData>;
+
+const initializeState = (): PoolState => {
+  const state: PoolState = {};
+  POOLS.forEach(pool => {
+    state[pool.id] = {
+      pool,
+      stakedBalance: 0,
+      rewards: 0,
+      tvl: pool.initialTvl,
+      lpTokenBalance: 1000, // Dummy balance for each pool
+    };
+  });
+  return state;
+};
 
 export const useYieldZenith = () => {
   const { isConnected } = useWallet();
   const { toast } = useToast();
-
-  const [stakedBalance, setStakedBalance] = useState(0);
-  const [rewards, setRewards] = useState(0);
-  const [tvl, setTvl] = useState(INITIAL_TVL);
-  const [isStaking, setIsStaking] = useState(false);
-  const [isUnstaking, setIsUnstaking] = useState(false);
-  const [isClaiming, setIsClaiming] = useState(false);
+  const [poolStates, setPoolStates] = useState<PoolState>(initializeState);
   
-  // Fake LP token balance for the user
-  const [lpTokenBalance, setLpTokenBalance] = useState(1000);
+  const [loadingStates, setLoadingStates] = useState<Record<string, 'staking' | 'unstaking' | 'claiming' | null>>({});
 
   useEffect(() => {
     if (!isConnected) {
-      setStakedBalance(0);
-      setRewards(0);
+      setPoolStates(initializeState());
     }
   }, [isConnected]);
 
   useEffect(() => {
-    if (stakedBalance > 0 && isConnected) {
-      const rewardsPerSecond = (stakedBalance * APY) / (365 * 24 * 60 * 60);
-      const interval = setInterval(() => {
-        setRewards(prevRewards => prevRewards + rewardsPerSecond);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [stakedBalance, isConnected]);
+    if (!isConnected) return;
 
-  const stake = useCallback(async (amount: number) => {
-    if (amount <= 0 || amount > lpTokenBalance) {
+    const interval = setInterval(() => {
+      setPoolStates(currentStates => {
+        const newStates = { ...currentStates };
+        let hasChanged = false;
+        for (const poolId in newStates) {
+          const poolState = newStates[poolId];
+          if (poolState.stakedBalance > 0) {
+            const rewardsPerSecond = (poolState.stakedBalance * poolState.pool.apy) / (365 * 24 * 60 * 60);
+            newStates[poolId] = {
+              ...poolState,
+              rewards: poolState.rewards + rewardsPerSecond,
+            };
+            hasChanged = true;
+          }
+        }
+        return hasChanged ? newStates : currentStates;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isConnected]);
+  
+  const setLoadingState = (poolId: string, state: 'staking' | 'unstaking' | 'claiming' | null) => {
+    setLoadingStates(prev => ({...prev, [poolId]: state}));
+  }
+
+  const stake = useCallback(async (poolId: string, amount: number) => {
+    const poolState = poolStates[poolId];
+    if (!poolState || amount <= 0 || amount > poolState.lpTokenBalance) {
       toast({
         variant: "destructive",
         title: "Invalid Amount",
@@ -45,20 +81,29 @@ export const useYieldZenith = () => {
       });
       return;
     }
-    setIsStaking(true);
+    setLoadingState(poolId, 'staking');
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setStakedBalance(prev => prev + amount);
-    setTvl(prev => prev + amount);
-    setLpTokenBalance(prev => prev - amount);
-    setIsStaking(false);
+
+    setPoolStates(prev => ({
+      ...prev,
+      [poolId]: {
+        ...poolState,
+        stakedBalance: poolState.stakedBalance + amount,
+        tvl: poolState.tvl + amount, // This is a simplification
+        lpTokenBalance: poolState.lpTokenBalance - amount,
+      }
+    }));
+    
+    setLoadingState(poolId, null);
     toast({
       title: "Staked Successfully",
-      description: `You have staked ${amount} LP tokens.`,
+      description: `You have staked ${amount} ${poolState.pool.lpTokenSymbol}.`,
     });
-  }, [lpTokenBalance, toast]);
+  }, [poolStates, toast]);
 
-  const unstake = useCallback(async (amount: number) => {
-    if (amount <= 0 || amount > stakedBalance) {
+  const unstake = useCallback(async (poolId: string, amount: number) => {
+    const poolState = poolStates[poolId];
+    if (!poolState || amount <= 0 || amount > poolState.stakedBalance) {
       toast({
         variant: "destructive",
         title: "Invalid Amount",
@@ -66,20 +111,27 @@ export const useYieldZenith = () => {
       });
       return;
     }
-    setIsUnstaking(true);
+    setLoadingState(poolId, 'unstaking');
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setStakedBalance(prev => prev - amount);
-    setTvl(prev => prev - amount);
-    setLpTokenBalance(prev => prev + amount);
-    setIsUnstaking(false);
+    setPoolStates(prev => ({
+      ...prev,
+      [poolId]: {
+        ...poolState,
+        stakedBalance: poolState.stakedBalance - amount,
+        tvl: poolState.tvl - amount, // This is a simplification
+        lpTokenBalance: poolState.lpTokenBalance + amount,
+      }
+    }));
+    setLoadingState(poolId, null);
     toast({
       title: "Unstaked Successfully",
-      description: `You have unstaked ${amount} LP tokens.`,
+      description: `You have unstaked ${amount} ${poolState.pool.lpTokenSymbol}.`,
     });
-  }, [stakedBalance, toast]);
+  }, [poolStates, toast]);
 
-  const claim = useCallback(async () => {
-    if (rewards <= 0) {
+  const claim = useCallback(async (poolId: string) => {
+    const poolState = poolStates[poolId];
+    if (!poolState || poolState.rewards <= 0) {
       toast({
         variant: "destructive",
         title: "No Rewards to Claim",
@@ -87,23 +139,33 @@ export const useYieldZenith = () => {
       });
       return;
     }
-    setIsClaiming(true);
+    setLoadingState(poolId, 'claiming');
     await new Promise(resolve => setTimeout(resolve, 1500));
-    const claimedAmount = rewards;
-    setRewards(0);
-    setIsClaiming(false);
+    const claimedAmount = poolState.rewards;
+    
+    setPoolStates(prev => ({
+      ...prev,
+      [poolId]: {
+        ...poolState,
+        rewards: 0,
+      }
+    }));
+    setLoadingState(poolId, null);
     toast({
       title: "Rewards Claimed",
-      description: `You have claimed ${claimedAmount.toFixed(6)} ZEN.`,
+      description: `You have claimed ${claimedAmount.toFixed(6)} ${poolState.pool.rewardTokenSymbol}.`,
     });
-  }, [rewards, toast]);
+  }, [poolStates, toast]);
+  
+  const getPoolData = useCallback((poolId: string) => poolStates[poolId], [poolStates]);
+
+  const isStaking = (poolId: string) => loadingStates[poolId] === 'staking';
+  const isUnstaking = (poolId: string) => loadingStates[poolId] === 'unstaking';
+  const isClaiming = (poolId: string) => loadingStates[poolId] === 'claiming';
 
   return {
-    stakedBalance,
-    rewards,
-    tvl,
-    apy: APY,
-    lpTokenBalance,
+    poolStates,
+    getPoolData,
     stake,
     unstake,
     claim,

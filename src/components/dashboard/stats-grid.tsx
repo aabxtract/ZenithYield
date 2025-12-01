@@ -3,10 +3,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Percent, Landmark } from 'lucide-react';
 import { useYieldZenithContext } from '@/hooks/use-yield-zenith-provider';
-import { TOKEN_SYMBOL } from '@/lib/constants';
 
-export default function StatsGrid() {
-  const { tvl, apy, stakedBalance } = useYieldZenithContext();
+export default function StatsGrid({ poolId }: { poolId: string }) {
+  const { getPoolData } = useYieldZenithContext();
+  const poolData = getPoolData(poolId);
+
+  if (!poolData) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
+            <Card><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
+            <Card><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
+        </div>
+    );
+  }
+
+  const { pool, tvl, stakedBalance } = poolData;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', {
@@ -25,7 +37,7 @@ export default function StatsGrid() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(tvl)}</div>
-          <p className="text-xs text-muted-foreground">Total funds in the protocol</p>
+          <p className="text-xs text-muted-foreground">Total funds in this pool</p>
         </CardContent>
       </Card>
       <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -34,7 +46,7 @@ export default function StatsGrid() {
           <Percent className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{(apy * 100).toFixed(2)}%</div>
+          <div className="text-2xl font-bold">{(pool.apy * 100).toFixed(2)}%</div>
           <p className="text-xs text-muted-foreground">Fixed reward rate</p>
         </CardContent>
       </Card>
@@ -45,9 +57,9 @@ export default function StatsGrid() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stakedBalance.toLocaleString('en-US', { maximumFractionDigits: 4 })} {TOKEN_SYMBOL}
+            {stakedBalance.toLocaleString('en-US', { maximumFractionDigits: 4 })} {pool.lpTokenSymbol}
           </div>
-          <p className="text-xs text-muted-foreground">Your total staked assets</p>
+          <p className="text-xs text-muted-foreground">Your total staked assets in this pool</p>
         </CardContent>
       </Card>
     </div>

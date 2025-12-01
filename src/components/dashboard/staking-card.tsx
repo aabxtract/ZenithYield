@@ -5,29 +5,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useYieldZenithContext } from '@/hooks/use-yield-zenith-provider';
-import { TOKEN_NAME, TOKEN_SYMBOL } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 
-export function StakingCard() {
+export function StakingCard({ poolId }: { poolId: string }) {
   const [amount, setAmount] = useState('');
-  const { stake, isStaking, lpTokenBalance } = useYieldZenithContext();
+  const { stake, isStaking, getPoolData } = useYieldZenithContext();
+  const poolData = getPoolData(poolId);
+
+  if (!poolData) return null;
 
   const handleStake = () => {
     const stakeAmount = parseFloat(amount);
     if (!isNaN(stakeAmount) && stakeAmount > 0) {
-      stake(stakeAmount).then(() => setAmount(''));
+      stake(poolId, stakeAmount).then(() => setAmount(''));
     }
   };
   
   const handleMaxClick = () => {
-    setAmount(lpTokenBalance.toString());
+    setAmount(poolData.lpTokenBalance.toString());
   };
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
-        <CardTitle>Stake {TOKEN_NAME}</CardTitle>
-        <CardDescription>Deposit your {TOKEN_SYMBOL} tokens to earn rewards.</CardDescription>
+        <CardTitle>Stake {poolData.pool.lpTokenName}</CardTitle>
+        <CardDescription>Deposit your {poolData.pool.lpTokenSymbol} tokens to earn rewards.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
@@ -36,7 +38,7 @@ export function StakingCard() {
               Amount
             </label>
             <span className="text-sm text-muted-foreground">
-              Balance: {lpTokenBalance.toLocaleString()}
+              Balance: {poolData.lpTokenBalance.toLocaleString()}
             </span>
           </div>
           <div className="relative">
@@ -60,9 +62,9 @@ export function StakingCard() {
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleStake} disabled={isStaking || !amount} className="w-full">
-          {isStaking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isStaking ? 'Staking...' : 'Stake'}
+        <Button onClick={handleStake} disabled={isStaking(poolId) || !amount} className="w-full">
+          {isStaking(poolId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isStaking(poolId) ? 'Staking...' : 'Stake'}
         </Button>
       </CardFooter>
     </Card>
