@@ -5,6 +5,7 @@ import {
   Zap,
   LayoutDashboard,
   Wand2,
+  Vote,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -27,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'Dashboard';
     if (pathname.startsWith('/apy-optimizer')) return 'APY Optimizer';
+    if (pathname.startsWith('/governance')) return 'Governance';
     return 'YieldZenith';
   };
 
@@ -64,6 +66,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <a>
                       <Wand2 />
                       <span>APY Optimizer</span>
+                    </a>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/governance" legacyBehavior passHref>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/governance')}>
+                    <a>
+                      <Vote />
+                      <span>Governance</span>
                     </a>
                   </SidebarMenuButton>
                 </Link>
