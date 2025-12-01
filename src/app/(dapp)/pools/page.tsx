@@ -7,6 +7,7 @@ import { useYieldZenithContext } from "@/hooks/use-yield-zenith-provider";
 import Link from "next/link";
 import { ArrowRight, Lock, Percent, Landmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function PoolsPage() {
     const { getPoolData } = useYieldZenithContext();
@@ -23,7 +24,12 @@ export default function PoolsPage() {
                             <CardHeader>
                                 <div className="flex justify-between items-start">
                                     <CardTitle>{pool.lpTokenName}</CardTitle>
-                                    <Badge variant="secondary">{pool.rewardTokenSymbol} Rewards</Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant={pool.active ? "secondary" : "destructive"} className={cn(pool.active && "bg-green-500/20 text-green-700")}>
+                                            {pool.active ? "Active" : "Inactive"}
+                                        </Badge>
+                                        <Badge variant="secondary">{pool.rewardTokenSymbol} Rewards</Badge>
+                                    </div>
                                 </div>
                                 <CardDescription>Stake {pool.lpTokenSymbol} and earn {pool.rewardTokenSymbol}.</CardDescription>
                             </CardHeader>

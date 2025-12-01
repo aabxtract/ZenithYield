@@ -8,6 +8,7 @@ import {
   Vote,
   LineChart,
   Layers,
+  Shield,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -23,9 +24,13 @@ import {
 import Link from 'next/link';
 import { ConnectWallet } from '../connect-wallet';
 import { Button } from '../ui/button';
+import { useWallet } from '@/context/wallet-context';
+import { ADMIN_ADDRESS } from '@/lib/constants';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { address } = useWallet();
+  const isAdmin = address === ADMIN_ADDRESS;
 
   const getPageTitle = () => {
     if (pathname.startsWith('/pools')) return 'Staking Pools';
@@ -33,6 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/apy-optimizer')) return 'APY Optimizer';
     if (pathname.startsWith('/governance')) return 'Governance';
     if (pathname.startsWith('/analytics')) return 'Analytics';
+    if (pathname.startsWith('/admin')) return 'Admin Dashboard';
     return 'YieldZenith';
   };
 
@@ -94,6 +100,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+               {isAdmin && (
+                <SidebarMenuItem>
+                  <Link href="/admin" legacyBehavior passHref>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/admin')}>
+                      <a>
+                        <Shield />
+                        <span>Admin</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>

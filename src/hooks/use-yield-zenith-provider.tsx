@@ -12,6 +12,13 @@ interface YieldZenithContextType {
   isStaking: (poolId: string) => boolean;
   isUnstaking: (poolId: string) => boolean;
   isClaiming: (poolId: string) => boolean;
+  // Admin functions
+  fundPool: (poolId: string, amount: number) => Promise<void>;
+  setPoolApy: (poolId: string, newApy: number) => Promise<void>;
+  togglePoolStatus: (poolId: string) => Promise<void>;
+  isFunding: (poolId: string) => boolean;
+  isSettingApy: (poolId: string) => boolean;
+  isTogglingStatus: (poolId: string) => boolean;
 }
 
 const YieldZenithContext = createContext<YieldZenithContextType | undefined>(undefined);

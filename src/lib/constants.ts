@@ -1,5 +1,6 @@
 export const REWARD_TOKEN_NAME = 'Zenith';
 export const REWARD_TOKEN_SYMBOL = 'ZEN';
+export const ADMIN_ADDRESS = '0x1A2b3c4D5e6F7g8H9i0J1k2L3m4N5o6P7q8R9s0T';
 
 export interface Pool {
     id: string;
@@ -9,6 +10,8 @@ export interface Pool {
     rewardTokenSymbol: string;
     apy: number;
     initialTvl: number;
+    totalRewards: number;
+    active: boolean;
 }
 
 export const POOLS: Pool[] = [
@@ -20,6 +23,8 @@ export const POOLS: Pool[] = [
         rewardTokenSymbol: REWARD_TOKEN_SYMBOL,
         apy: 0.25,
         initialTvl: 1254321.98,
+        totalRewards: 100000,
+        active: true,
     },
     {
         id: 'wbtc-eth-lp',
@@ -29,6 +34,8 @@ export const POOLS: Pool[] = [
         rewardTokenSymbol: REWARD_TOKEN_SYMBOL,
         apy: 0.18,
         initialTvl: 876543.21,
+        totalRewards: 50000,
+        active: true,
     },
     {
         id: 'zen-eth-lp',
@@ -38,6 +45,8 @@ export const POOLS: Pool[] = [
         rewardTokenSymbol: REWARD_TOKEN_SYMBOL,
         apy: 0.35,
         initialTvl: 543210.98,
+        totalRewards: 200000,
+        active: false,
     }
 ];
 // Deprecated single-pool constants
