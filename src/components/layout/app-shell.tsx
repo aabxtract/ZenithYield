@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Wand2,
   Vote,
+  LineChart,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -29,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/dashboard')) return 'Dashboard';
     if (pathname.startsWith('/apy-optimizer')) return 'APY Optimizer';
     if (pathname.startsWith('/governance')) return 'Governance';
+    if (pathname.startsWith('/analytics')) return 'Analytics';
     return 'YieldZenith';
   };
 
@@ -58,6 +60,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <span>Dashboard</span>
                     </a>
                   </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/analytics" legacyBehavior passHref>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith('/analytics')}>
+                        <a>
+                        <LineChart />
+                        <span>Analytics</span>
+                        </a>
+                    </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
